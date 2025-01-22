@@ -74,6 +74,23 @@ service ModelRegistryService {
     };
   }
 
+  rpc validateModelOwnership (ValidateModelOwnership) returns (ValidateModelOwnership.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "GET",
+        path: "/preview/mlflow/registered-models/validate-model-ownership"
+        since { major: 2, minor: 0 },
+      },{
+        method: "GET",
+        path: "/mlflow/registered-models/validate-model-ownership"
+        since { major: 2, minor: 0 },
+      }
+      ],
+      visibility: PUBLIC,
+      rpc_doc_title: "Search ValidateModelOwnership",
+    };
+  }
+
   rpc searchRegisteredModels (SearchRegisteredModels) returns (SearchRegisteredModels.Response) {
     option (rpc) = {
       endpoints: [{
@@ -159,6 +176,23 @@ service ModelRegistryService {
       }],
       visibility:PUBLIC,
       rpc_doc_title:"Get ModelVersion",
+    };
+  }
+
+  rpc getLatestModelVersion (GetLatestModelVersion) returns (GetLatestModelVersion.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "GET",
+        path: "/preview/mlflow/model-latest-version/get"
+        since { major: 2, minor: 0 },
+      },{
+        method: "GET",
+        path: "/mlflow/model-latest-version/get"
+        since { major: 2, minor: 0 },
+      }
+      ],
+      visibility: PUBLIC,
+      rpc_doc_title: "Get ModelLatestVersion",
     };
   }
 
@@ -288,15 +322,18 @@ message RegisteredModel {
   // Description of this ``registered_model``.
   optional string description = 5;
 
+  // created by CBD flag of this ``registered_model``
+  optional string platform = 6;
+
   // Collection of latest model versions for each stage.
   // Only contains models with current ``READY`` status.
-  repeated ModelVersion latest_versions = 6;
+  repeated ModelVersion latest_versions = 7;
 
   // Tags: Additional metadata key-value pairs for this ``registered_model``.
-  repeated RegisteredModelTag tags = 7;
+  repeated RegisteredModelTag tags = 8;
 
   // Aliases pointing to model versions associated with this ``registered_model``.
-  repeated RegisteredModelAlias aliases = 8;
+  repeated RegisteredModelAlias aliases = 9;
 }
 
 enum ModelVersionStatus {
@@ -368,6 +405,8 @@ message CreateRegisteredModel {
   // Optional description for registered model.
   optional string description = 3;
 
+  // created by CBD flag of this ``registered_model``
+  optional string platform = 4; 
   message Response {
     optional RegisteredModel registered_model = 1;
   }
@@ -412,6 +451,17 @@ message DeleteRegisteredModel {
 }
 
 message GetRegisteredModel {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // Registered model unique name identifier.
+  optional string name = 1 [(validate_required) = true];
+
+  message Response {
+    optional RegisteredModel registered_model = 1;
+  }
+}
+
+message ValidateModelOwnership {
   option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
 
   // Registered model unique name identifier.
@@ -561,6 +611,17 @@ message GetModelVersion {
 
   message Response {
     optional ModelVersion model_version = 1;
+  }
+}
+
+message GetLatestModelVersion {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // Registered model unique name identifier.
+  optional string name = 1 [(validate_required) = true];
+
+  message Response {
+    optional RegisteredModel registered_model = 1;
   }
 }
 
